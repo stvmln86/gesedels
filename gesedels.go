@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"go.etcd.io/bbolt"
 )
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,46 @@ func PairValue(text string) []byte {
 ///////////////////////////////////////////////////////////////////////////////////////
 //                      part three · database handling functions                     //
 ///////////////////////////////////////////////////////////////////////////////////////
+
+// DeletePair deletes an existing pair from a database.
+func DeletePair(db *bbolt.DB, user, name string) error {
+	return db.Update(func(tx *bbolt.Tx) error {
+		if buck := tx.Bucket([]byte("main")); buck != nil {
+			return buck.Delete(PairKey(user, name))
+		}
+
+		return nil
+	})
+}
+
+// GetPair returns the value of an existing pair from a database and a boolean
+// indicating if the pair exists.
+func GetPair(db *bbolt.DB, user, name string) (string, bool, error) {
+	var pval string
+	var okay = false
+
+	return pval, okay, db.View(func(tx *bbolt.Tx) error {
+		if buck := tx.Bucket([]byte("main")); buck != nil {
+			bytes := buck.Get(PairKey(user, name))
+			pval = string(bytes)
+			okay = bytes != nil
+		}
+
+		return nil
+	})
+}
+
+// SetPair sets the value of a new or existing pair in a database.
+func SetPair(db *bbolt.DB, user, name, pval string) error {
+	return db.Update(func(tx *bbolt.Tx) error {
+		buck, err := tx.CreateBucketIfNotExists([]byte("main"))
+		if err != nil {
+			return err
+		}
+
+		return buck.Put(PairKey(user, name), PairValue(pval))
+	})
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //                        part four · http response functions                        //
