@@ -32,6 +32,30 @@ func response(w *httptest.ResponseRecorder) (int, string) {
 //                      part two · string sanitisation functions                     //
 ///////////////////////////////////////////////////////////////////////////////////////
 
+func TestIsPrivate(t *testing.T) {
+	// success - true
+	ok := IsPrivate("__test__")
+	assert.True(t, ok)
+
+	// success - false
+	for _, name := range []string{"__test", "test__", "test"} {
+		ok := IsPrivate(name)
+		assert.False(t, ok)
+	}
+}
+
+func TestPairKey(t *testing.T) {
+	// success
+	pkey := PairKey("USER", "NAME")
+	assert.Equal(t, []byte("user:name"), pkey)
+}
+
+func TestPairValue(t *testing.T) {
+	// success
+	pval := PairValue("\tValue.\n")
+	assert.Equal(t, []byte("Value.\n"), pval)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //                      part three · database handling functions                     //
 ///////////////////////////////////////////////////////////////////////////////////////

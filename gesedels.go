@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +17,23 @@ import (
 ///////////////////////////////////////////////////////////////////////////////////////
 //                      part two · string sanitisation functions                     //
 ///////////////////////////////////////////////////////////////////////////////////////
+
+// IsPrivate returns true if a name string is surrounded with two leading underscores.
+func IsPrivate(name string) bool {
+	return strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__")
+}
+
+// PairKey returns a lowercase pair key string from user and name strings.
+func PairKey(user, name string) []byte {
+	user = strings.ToLower(user)
+	name = strings.ToLower(name)
+	return []byte(user + ":" + name)
+}
+
+// PairValue returns a whitespace-trimmed pair value string.
+func PairValue(text string) []byte {
+	return []byte(strings.TrimSpace(text) + "\n")
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //                      part three · database handling functions                     //
