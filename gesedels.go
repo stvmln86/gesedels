@@ -5,8 +5,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"go.etcd.io/bbolt"
@@ -15,6 +17,9 @@ import (
 ///////////////////////////////////////////////////////////////////////////////////////
 //                          part one · constants and globals                         //
 ///////////////////////////////////////////////////////////////////////////////////////
+
+// DB is the global database connection object.
+var DB *bbolt.DB
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //                      part two · string sanitisation functions                     //
@@ -105,13 +110,43 @@ func WriteFailure(w http.ResponseWriter, code int, form string, elems ...any) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-//                        part five · server type and methods                        //
+//                       part five · server endpoint functions                       //
 ///////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////////////
-//                         part six · server endpoint methods                        //
-///////////////////////////////////////////////////////////////////////////////////////
+// GetIndex returns the index page.
+func GetIndex(w http.ResponseWriter, r *http.Request) {
+	WriteHTTP(w, http.StatusOK, "Hello.")
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
-//                        part seven · main runtime functions                        //
+//                         part six · main runtime functions                         //
 ///////////////////////////////////////////////////////////////////////////////////////
+
+// try panics on a non-nil error.
+func try(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+// main runs the main Gesedels program.
+func main() {
+	// Define and parse command-line functions.
+	fset := flag.NewFlagSet("gesedels", flag.ExitOnError)
+	addr := fset.String("addr", "127.0.0.1:8080", "set server address")
+	path := fset.String("path", "./gesedels.db", "set database path")
+	fset.Parse(os.Args[1:])
+
+	// Connect to and set database.
+	db, err := bbolt.Open(*path, 0666, nil)
+	try(err)
+	DB = db
+
+	// Initialise mux and register endpoints.
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", GetIndex)
+
+	// Initialise and run server.
+	srv := &http.Server{Addr: *addr, Handler: mux}
+	try(srv.ListenAndServe())
+}
